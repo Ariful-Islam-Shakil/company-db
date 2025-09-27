@@ -1,0 +1,21 @@
+// src/index.ts
+import "reflect-metadata";
+import { buildSchema } from "type-graphql";
+import { createYoga } from "graphql-yoga";
+import { createServer } from "http";
+import { CompanyResolver } from "./resolvers/CompanyResolver";
+
+async function main() {
+  const schema = await buildSchema({ resolvers: [CompanyResolver], validate: true });
+  const yoga = createYoga({ schema, graphiql: true });
+  const server = createServer(yoga);
+  const port = process.env.PORT || 4000;
+  server.listen(port, () => {
+    console.log(`GraphQL server running at http://localhost:${port}/graphql`);
+  });
+}
+
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
