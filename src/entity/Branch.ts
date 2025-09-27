@@ -1,6 +1,4 @@
-// src/entity/Branch.ts
 import { Field, ID, ObjectType } from "type-graphql";
-import { Location } from "./Location";
 
 @ObjectType()
 export class Branch {
@@ -8,8 +6,8 @@ export class Branch {
   id!: string;
 
   @Field()
-  region!: string;
+  branch_name!: string;
 
-  @Field(() => [Location])
-  locations!: Location[];
+  @Field()
+  address!: string;
 }

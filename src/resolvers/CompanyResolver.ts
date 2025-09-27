@@ -1,19 +1,12 @@
-// src/resolvers/CompanyResolver.ts
 import { Resolver, Query, Mutation, Arg } from "type-graphql";
 import { Company } from "../entity/Company";
+import { Region } from "../entity/Region";
 import { Branch } from "../entity/Branch";
-import { Location } from "../entity/Location";
-import {
-  CreateCompanyInput,
-  CreateBranchInput,
-  CreateLocationInput,
-  UpdateCompanyInput,
-  UpdateBranchInput,
-  UpdateLocationInput
-} from "../entity/inputs";
+import { CreateCompanyInput, UpdateCompanyInput } from "../entity/inputs";
 import { docClient, TABLE_NAME } from "../dynamo";
 import { PutCommand, GetCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { GraphQLError } from "graphql";
 
 @Resolver(() => Company)
 export class CompanyResolver {
@@ -24,44 +17,91 @@ export class CompanyResolver {
     return (res.Items || []) as Company[];
   }
 
-  // get single company
+  // get single company by ID
   @Query(() => Company)
   async getCompany(@Arg("id") id: string): Promise<Company> {
     const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id } }));
-    if (!res.Item) throw new Error("Company not found");
+    if (!res.Item) throw new GraphQLError("Company not found");
     return res.Item as Company;
   }
 
-  // create company (branches & locations optional)
+  // get company by name
+  @Query(() => Company)
+  async getCompanyByName(@Arg("companyName") companyName: string): Promise<Company> {
+    const res = await docClient.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: "#name = :name",
+        ExpressionAttributeNames: { "#name": "name" },
+        ExpressionAttributeValues: { ":name": companyName },
+        Limit: 1,
+      })
+    );
+    if (!res.Items || res.Items.length === 0) {
+      throw new GraphQLError(`Company with name "${companyName}" not found`);
+    }
+    return res.Items[0] as Company;
+  }
+
+  // Return all companies that have at least one region with the given region name
+  @Query(() => [Company])
+  async companiesByRegion(@Arg("region_name") region_name: string): Promise<Company[]> {
+    const res = await docClient.send(new ScanCommand({ TableName: TABLE_NAME }));
+
+    if (!res.Items || res.Items.length === 0) {
+      throw new GraphQLError(`Failed to fetch data from ${TABLE_NAME} table`);
+    }
+
+    return (res.Items as Company[]).filter(company =>
+      (company.regions || []).some(region => region.region_name === region_name)
+    );
+  }
+
+  // create company (with optional regions & branches)
   @Mutation(() => Company)
   async createCompany(@Arg("input") input: CreateCompanyInput): Promise<Company> {
+    // check if company already exists
+    const existing = await docClient.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: "#name = :name",
+        ExpressionAttributeNames: { "#name": "name" },
+        ExpressionAttributeValues: { ":name": input.name },
+        Limit: 1,
+      })
+    );
+    if (existing.Items && existing.Items.length > 0) {
+      throw new GraphQLError(`Company with name "${input.name}" already exists`);
+    }
+
+    // create new record
     const companyId = uuidv4();
-    const branches: Branch[] = (input.branches || []).map(b => {
-      const branchId = uuidv4();
-      const locations: Location[] = (b.locations || []).map(l => ({
+    const regions: Region[] = (input.regions || []).map(r => {
+      const regionId = uuidv4();
+      const branches: Branch[] = (r.branches || []).map(b => ({
         id: uuidv4(),
-        name: l.name,
-        address: l.address
+        branch_name: b.branch_name,
+        address: b.address,
       }));
-      return { id: branchId, region: b.region, locations };
+      return { id: regionId, region_name: r.region_name, branches };
     });
 
     const item: Company = {
       id: companyId,
       name: input.name,
-      branches,
-      createdAt: new Date().toISOString()
+      regions,
+      createdAt: new Date().toISOString(),
     };
 
     await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
     return item;
   }
 
-  // update top-level company fields (simple)
+  // update company name
   @Mutation(() => Company)
   async updateCompany(@Arg("id") id: string, @Arg("input") input: UpdateCompanyInput): Promise<Company> {
     const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id } }));
-    if (!res.Item) throw new Error("Company not found");
+    if (!res.Item) throw new GraphQLError("Company not found");
     const company = res.Item as Company;
 
     if (input.name !== undefined) company.name = input.name;
@@ -74,109 +114,6 @@ export class CompanyResolver {
   @Mutation(() => Boolean)
   async deleteCompany(@Arg("id") id: string): Promise<boolean> {
     await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { id } }));
-    return true;
-  }
-
-  // add branch
-  @Mutation(() => Branch)
-  async addBranch(@Arg("companyId") companyId: string, @Arg("input") input: CreateBranchInput): Promise<Branch> {
-    const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-    if (!res.Item) throw new Error("Company not found");
-    const company = res.Item as Company;
-
-    const branchId = uuidv4();
-    const locations: Location[] = (input.locations || []).map(l => ({
-      id: uuidv4(),
-      name: l.name,
-      address: l.address
-    }));
-
-    const branch: Branch = { id: branchId, region: input.region, locations };
-    company.branches = company.branches || [];
-    company.branches.push(branch);
-
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-    return branch;
-  }
-
-  // update branch (read-modify-write)
-  @Mutation(() => Branch)
-  async updateBranch(@Arg("companyId") companyId: string, @Arg("branchId") branchId: string, @Arg("input") input: UpdateBranchInput): Promise<Branch> {
-    const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-    if (!res.Item) throw new Error("Company not found");
-    const company = res.Item as Company;
-
-    const branch = (company.branches || []).find(b => b.id === branchId);
-    if (!branch) throw new Error("Branch not found");
-
-    if (input.region !== undefined) branch.region = input.region;
-
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-    return branch;
-  }
-
-  // delete branch
-  @Mutation(() => Boolean)
-  async deleteBranch(@Arg("companyId") companyId: string, @Arg("branchId") branchId: string): Promise<boolean> {
-    const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-    if (!res.Item) throw new Error("Company not found");
-    const company = res.Item as Company;
-
-    company.branches = (company.branches || []).filter(b => b.id !== branchId);
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-    return true;
-  }
-
-  // add location into a branch
-  @Mutation(() => Location)
-  async addLocation(@Arg("companyId") companyId: string, @Arg("branchId") branchId: string, @Arg("input") input: CreateLocationInput): Promise<Location> {
-    const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-    if (!res.Item) throw new Error("Company not found");
-    const company = res.Item as Company;
-
-    const branch = (company.branches || []).find(b => b.id === branchId);
-    if (!branch) throw new Error("Branch not found");
-
-    const loc: Location = { id: uuidv4(), name: input.name, address: input.address };
-    branch.locations = branch.locations || [];
-    branch.locations.push(loc);
-
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-    return loc;
-  }
-
-  // update location
-  @Mutation(() => Location)
-  async updateLocation(@Arg("companyId") companyId: string, @Arg("branchId") branchId: string, @Arg("locationId") locationId: string, @Arg("input") input: UpdateLocationInput): Promise<Location> {
-    const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-    if (!res.Item) throw new Error("Company not found");
-    const company = res.Item as Company;
-
-    const branch = (company.branches || []).find(b => b.id === branchId);
-    if (!branch) throw new Error("Branch not found");
-
-    const loc = (branch.locations || []).find(l => l.id === locationId);
-    if (!loc) throw new Error("Location not found");
-
-    if (input.name !== undefined) loc.name = input.name;
-    if (input.address !== undefined) loc.address = input.address;
-
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-    return loc;
-  }
-
-  // delete location
-  @Mutation(() => Boolean)
-  async deleteLocation(@Arg("companyId") companyId: string, @Arg("branchId") branchId: string, @Arg("locationId") locationId: string): Promise<boolean> {
-    const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-    if (!res.Item) throw new Error("Company not found");
-    const company = res.Item as Company;
-
-    const branch = (company.branches || []).find(b => b.id === branchId);
-    if (!branch) throw new Error("Branch not found");
-
-    branch.locations = (branch.locations || []).filter(l => l.id !== locationId);
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
     return true;
   }
 }

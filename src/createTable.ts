@@ -1,16 +1,10 @@
 // src/createTable.ts
-import { DynamoDBClient, CreateTableCommand, ScalarAttributeType, KeyType, BillingMode } from "@aws-sdk/client-dynamodb";
-
-const endpoint = process.env.DYNAMODB_ENDPOINT || "http://localhost:8000";
-const client = new DynamoDBClient({
-  region: "local",
-  endpoint,
-  credentials: { accessKeyId: "fake", secretAccessKey: "fake" }
-});
+import { CreateTableCommand, ScalarAttributeType, KeyType, BillingMode } from "@aws-sdk/client-dynamodb";
+import { TABLE_NAME, client } from "./dynamo"; 
 
 async function main() {
   const params = {
-    TableName: "Companies",
+    TableName: TABLE_NAME,
     AttributeDefinitions: [{ AttributeName: "id", AttributeType: ScalarAttributeType.S }],
     KeySchema: [{ AttributeName: "id", KeyType: KeyType.HASH }],
     BillingMode: BillingMode.PAY_PER_REQUEST
