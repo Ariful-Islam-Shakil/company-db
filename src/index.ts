@@ -3,10 +3,12 @@ import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { createYoga } from "graphql-yoga";
 import { createServer } from "http";
-import { CompanyResolver } from "./resolvers/CompanyResolver";
+import { CompanyResolver } from "./resolvers/companyResolver";
+import { RegionResolver } from "./resolvers/regionResolver";
+import { BranchResolver } from "./resolvers/branchResolver";
 
 async function main() {
-  const schema = await buildSchema({ resolvers: [CompanyResolver], validate: true });
+  const schema = await buildSchema({ resolvers: [CompanyResolver, RegionResolver, BranchResolver], validate: true });
   const yoga = createYoga({ schema, graphiql: true });
   const server = createServer(yoga);
   const port = process.env.PORT || 4000;

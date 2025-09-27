@@ -1,6 +1,5 @@
-// src/entity/Company.ts
 import { Field, ID, ObjectType } from "type-graphql";
-import { Branch } from "./Branch";
+import { Region } from "./Region";
 
 @ObjectType()
 export class Company {
@@ -10,8 +9,8 @@ export class Company {
   @Field()
   name!: string;
 
-  @Field(() => [Branch])
-  branches!: Branch[];
+  @Field(() => [Region])
+  regions!: Region[];
 
   @Field()
   createdAt!: string;

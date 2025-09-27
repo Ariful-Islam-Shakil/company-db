@@ -1,12 +1,11 @@
-// src/entity/inputs.ts
-import { InputType, Field, ID } from "type-graphql";
+import { InputType, Field } from "type-graphql";
 import { IsNotEmpty } from "class-validator";
 
 @InputType()
-export class CreateLocationInput {
+export class CreateBranchInput {
   @Field()
   @IsNotEmpty()
-  name!: string;
+  branch_name!: string;
 
   @Field()
   @IsNotEmpty()
@@ -14,13 +13,13 @@ export class CreateLocationInput {
 }
 
 @InputType()
-export class CreateBranchInput {
+export class CreateRegionInput {
   @Field()
   @IsNotEmpty()
-  region!: string;
+  region_name!: string;
 
-  @Field(() => [CreateLocationInput], { nullable: true })
-  locations?: CreateLocationInput[];
+  @Field(() => [CreateBranchInput], { nullable: true })
+  branches?: CreateBranchInput[];
 }
 
 @InputType()
@@ -29,8 +28,8 @@ export class CreateCompanyInput {
   @IsNotEmpty()
   name!: string;
 
-  @Field(() => [CreateBranchInput], { nullable: true })
-  branches?: CreateBranchInput[];
+  @Field(() => [CreateRegionInput], { nullable: true })
+  regions?: CreateRegionInput[];
 }
 
 @InputType()
@@ -40,15 +39,15 @@ export class UpdateCompanyInput {
 }
 
 @InputType()
-export class UpdateBranchInput {
+export class UpdateRegionInput {
   @Field({ nullable: true })
-  region?: string;
+  region_name?: string;
 }
 
 @InputType()
-export class UpdateLocationInput {
+export class UpdateBranchInput {
   @Field({ nullable: true })
-  name?: string;
+  branch_name?: string;
 
   @Field({ nullable: true })
   address?: string;

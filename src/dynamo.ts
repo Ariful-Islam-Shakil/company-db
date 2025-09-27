@@ -1,11 +1,15 @@
 // src/dynamo.ts
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import dotenv from "dotenv";
 
-export const TABLE_NAME = process.env.COMPANIES_TABLE || "Companies";
-const endpoint = process.env.DYNAMODB_ENDPOINT || "http://localhost:8000";
+// Load environment variables
+dotenv.config();
+export const TABLE_NAME = "CompanyInfo";
+// export const endpoint = "http://localhost:8000";
+const endpoint = process.env.DYNAMODB_ENDPOINT
 
-const client = new DynamoDBClient({
+export const client = new DynamoDBClient({
   region: "local",
   endpoint,
   credentials: {
