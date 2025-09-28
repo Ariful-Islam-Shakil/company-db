@@ -3,9 +3,9 @@ import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { createYoga } from "graphql-yoga";
 import { createServer } from "http";
-import { CompanyResolver } from "./resolvers/companyResolver";
-import { RegionResolver } from "./resolvers/regionResolver";
-import { BranchResolver } from "./resolvers/branchResolver";
+import { CompanyResolver } from "./modules/company/companyResolver";
+import { RegionResolver } from "./modules/region/regionResolver";
+import { BranchResolver } from "./modules/branch/branchResolver";
 
 async function main() {
   const schema = await buildSchema({ resolvers: [CompanyResolver, RegionResolver, BranchResolver], validate: true });
