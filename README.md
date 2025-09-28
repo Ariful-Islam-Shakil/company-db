@@ -5,19 +5,22 @@ COMPANY-DB/
 ├─ src/
 │  ├─ modules/
 │  │  ├─ company/
-│  │  │  ├─ company.type.ts            # @ObjectType() Company entity definition
-│  │  │  ├─ companyResolver.ts    # Queries & Mutations for Company (CRUD)
-│  │  │  └─ company.input.ts      # @InputType() classes for creating/updating Company
+│  │  │  ├─ company.type.ts           # @ObjectType() Company entity definition
+│  │  │  ├─ companyResolver.ts        # Queries & Mutations for Company (CRUD)
+│  │  │  ├─ company.service.ts        # Business logic: CRUD operations for Company
+│  │  │  └─ company.resolver.ts       # Queries & Mutations for Company (uses company.service.ts)
 │  │  │
 │  │  ├─ region/
-│  │  │  ├─ region.type.ts             # @ObjectType() Region entity definition
-│  │  │  ├─ regionResolver.ts     # Queries & Mutations for Region (CRUD)
-│  │  │  └─ region.input.ts       # @InputType() classes for creating/updating Region
+│  │  │  ├─ region.type.ts            # @ObjectType() Region entity definition
+│  │  │  ├─ regionResolver.ts         # Queries & Mutations for Region (CRUD)
+│  │  │  ├─ region.service.ts         # Business logic: CRUD operations for Region
+│  │  │  └─ region.resolver.ts        # Queries & Mutations for Region (uses region.service.ts)
 │  │  │
 │  │  └─ branch/
-│  │     ├─ branch.type.ts             # @ObjectType() Branch entity definition
-│  │     ├─ branchResolver.ts     # Queries & Mutations for Branch (CRUD)
-│  │     └─ branch.input.ts       # @InputType() classes for creating/updating Branch
+│  │     ├─ branch.type.ts            # @ObjectType() Branch entity definition
+│  │     ├─ branchResolver.ts         # Queries & Mutations for Branch (CRUD)
+│  │     ├─ branch.service.ts         # Business logic: CRUD operations for Branch
+│  │     └─ branch.resolver.ts        # Queries & Mutations for Branch (uses branch.service.ts)
 │  │
 │  ├─ core/
 │  │  ├─ dynamo.ts                # DynamoDB client setup and constants
