@@ -1,5 +1,5 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Branch } from "./Branch";
+import { Branch } from "../branch/branch.type";
 
 @ObjectType()
 export class Region {

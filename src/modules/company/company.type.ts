@@ -1,5 +1,5 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Region } from "./Region";
+import { Region } from "../region/region.type";
 
 @ObjectType()
 export class Company {
