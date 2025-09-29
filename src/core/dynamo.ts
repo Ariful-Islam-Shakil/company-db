@@ -22,11 +22,11 @@ const schema = {
   },
   models: {
     Company: {
-      pk: { type: String, value: "COMPANY#${id}" },
-      sk: { type: String, value: "COMPANY" },
+      pk: { type: String, value: "COMPANY" },
+      sk: { type: String, value: "COMPANY#${id}" },
       id: { type: String, generate: "uuid" },
       name: { type: String, required: true },
-      gs1pk: { type: String, value: "COMPANY" }, // constant for GSI
+      gs1pk: { type: String, value: "COMPANY" },
     },
     Region: {
       pk: { type: String, value: "COMPANY#${companyId}" },
