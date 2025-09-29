@@ -7,33 +7,5 @@ export class Company {
 
   @Field()
   name!: string;
-
-  
 }
 
-@ObjectType()
-export class Region {
-  @Field(() => ID)
-  id!: string;
-
-  @Field()
-  companyId!: string;
-
-  @Field()
-  region_name!: string;
-}
-
-@ObjectType()
-export class Branch {
-  @Field(() => ID)
-  id!: string;
-
-  @Field()
-  regionId!: string;
-
-  @Field()
-  branch_name!: string;
-
-  @Field()
-  address!: string;
-}

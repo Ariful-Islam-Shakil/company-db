@@ -1,19 +1,28 @@
-import { InputType, Field } from "type-graphql";
-import { IsNotEmpty } from "class-validator";
+import { InputType, Field } from 'type-graphql'; 
 
 @InputType()
 export class CreateBranchInput {
   @Field()
-  @IsNotEmpty()
+  companyId!: string;
+
+  @Field()
+  regionId!: string;
+
+  @Field()
   branch_name!: string;
 
   @Field()
-  @IsNotEmpty()
   address!: string;
 }
 
 @InputType()
-export class UpdateBranchInput {
+export class UpdateBranchInput{
+  @Field()
+  regionId!: string;
+
+  @Field()
+  branchId!: string;
+
   @Field({ nullable: true })
   branch_name?: string;
 

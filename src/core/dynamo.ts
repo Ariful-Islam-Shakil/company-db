@@ -2,17 +2,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { Table } from "dynamodb-onetable";
 
-// ⚡ AWS SDK v3 client for DynamoDB Local
+// AWS SDK v3 client for DynamoDB Local
 const client = new DynamoDBClient({
   region: "local",
   endpoint: process.env.DYNAMO_ENDPOINT || "http://localhost:8000",
   credentials: {
-    accessKeyId: "fakeMyKeyId",   // DynamoDB Local accepts fake values
+    accessKeyId: "fakeMyKeyId",   
     secretAccessKey: "fakeSecret",
   },
 });
-
-// OneTable schema
 
 // OneTable schema
 const schema = {
@@ -65,21 +63,23 @@ export const CompanyModel = table.getModel("Company");
 export const RegionModel = table.getModel("Region");
 export const BranchModel = table.getModel("Branch");
 
+
+// Condition fro existance of table
 export async function initTable(deleteFirst = false) {
   const exists = await table.exists();
 
   if (exists && deleteFirst) {
     console.log("Table exists. Deleting...");
     await table.deleteTable("DeleteTableForever");
-    console.log("✅ Table CompanyDB deleted!");
+    console.log("Table CompanyDB deleted!");
   }
 
   if (!exists || deleteFirst) {
     console.log("Creating table...");
     await table.createTable();
-    console.log("✅ Table CompanyDB created!");
+    console.log("Table CompanyDB created!");
   } else {
-    console.log("✅ Table CompanyDB already exists.");
+    console.log("Table CompanyDB already exists.");
   }
 }
 
