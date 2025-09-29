@@ -1,37 +1,42 @@
-import { Resolver, Mutation, Arg } from "type-graphql";
-import { Branch } from "./branch.type";
-import { CreateBranchInput, UpdateBranchInput } from "./branch.input";
-import { BranchService } from "./branch.service";
+import { Resolver, Query, Mutation, Arg} from 'type-graphql';
+import { Branch } from './branch.type'
+import {  CreateBranchInput, UpdateBranchInput } from './branch.input';
+import { BranchService } from './branch.service';
+
+
 
 @Resolver(() => Branch)
 export class BranchResolver {
-  private branchService = new BranchService();
+  private service = new BranchService();
 
-  @Mutation(() => Branch)
-  async addBranch(
-    @Arg("companyId") companyId: string,
-    @Arg("regionId") regionId: string,
-    @Arg("input") input: CreateBranchInput
-  ): Promise<Branch> {
-    return this.branchService.addBranch(companyId, regionId, input);
+  // get all branches of specific region
+  @Query(() => [Branch])
+  async branches(@Arg("regionId") regionId: string) {
+    return this.service.getBranchesByRegion(regionId);
   }
 
-  @Mutation(() => Branch)
-  async updateBranch(
-    @Arg("companyId") companyId: string,
-    @Arg("regionId") regionId: string,
-    @Arg("branchId") branchId: string,
-    @Arg("input") input: UpdateBranchInput
-  ): Promise<Branch> {
-    return this.branchService.updateBranch(companyId, regionId, branchId, input);
+  // get specific branch of specific region by RegionId
+  @Query(() => Branch, { nullable: true })
+  async branchById(@Arg("regionId") regionId: string ,@Arg("branchId") branchId: string) {
+    return this.service.getBranch(regionId, branchId);
   }
 
+  // Create new branch to specific company
+  @Mutation(() => Branch)
+  async createBranch(@Arg("input") input: CreateBranchInput) {
+    return this.service.createBranch(input);
+  }
+
+  // Update branch information
+  @Mutation(() => Branch)
+  async updateBranch(@Arg("input") input: UpdateBranchInput) {
+    return this.service.updateBranch(input);
+  }
+
+  // Delete any branch
   @Mutation(() => Boolean)
-  async deleteBranch(
-    @Arg("companyId") companyId: string,
-    @Arg("regionId") regionId: string,
-    @Arg("branchId") branchId: string
-  ): Promise<boolean> {
-    return this.branchService.deleteBranch(companyId, regionId, branchId);
+  async deleteBranch(@Arg("regionId") regionId:string, @Arg("branchId") id: string) {
+    await this.service.deleteBranch(regionId, id);
+    return true;
   }
 }

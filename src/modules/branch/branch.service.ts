@@ -1,60 +1,41 @@
-import { docClient, TABLE_NAME } from "../../core/dynamo";
-import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { v4 as uuidv4 } from "uuid";
-import { GraphQLError } from "graphql";
-import { Company } from "../company/company.type";
-import { Branch } from "./branch.type";
-import { CreateBranchInput, UpdateBranchInput } from "./branch.input";
+import { BranchModel } from '../../core/dynamo';
+import { CreateBranchInput, UpdateBranchInput } from './branch.input';
+
 
 export class BranchService {
-    // Create new branch under existing company and region
-    async addBranch(companyId: string, regionId: string, input: CreateBranchInput): Promise<Branch> {
-        const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-        if (!res.Item) throw new GraphQLError("Company not found");
-        const company = res.Item as Company;
+  // Create new branch to specific company
+  async createBranch(input: CreateBranchInput) {
+    return await BranchModel.create(input);
+  }
 
-        const region = (company.regions || []).find(r => r.id === regionId);
-        if (!region) throw new GraphQLError("Region not found");
+  // get specific branch of specific region by RegionId
+  async getBranch(regionId: string, branchId: string) {
+    return await BranchModel.get({ 
+      pk: `REGION#${regionId}`,
+      id: branchId
+    });
+  }
 
-        const branch: Branch = { id: uuidv4(), branch_name: input.branch_name, address: input.address };
-        region.branches = region.branches || [];
-        region.branches.push(branch);
+  // get all branches of specific region
+  async getBranchesByRegion(regionId: string) {
+    return await BranchModel.find({ pk: `REGION#${regionId}` });
+  }
 
-        await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-        return branch;
-    }
+  // Update branch information
+  async updateBranch(input: UpdateBranchInput) {
+    return await BranchModel.update({  
+      pk: `REGION#${input.regionId}`,
+      sk: `BRANCH#${input.branchId}`,
+      branch_name: input.branch_name,
+      address: input.address
+     });
+  }
 
-    // Update branch information
-    async updateBranch(companyId: string, regionId: string, branchId: string, input: UpdateBranchInput): Promise<Branch> {
-        const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-        if (!res.Item) throw new GraphQLError("Company not found");
-        const company = res.Item as Company;
-
-        const region = (company.regions || []).find(r => r.id === regionId);
-        if (!region) throw new GraphQLError("Region not found");
-
-        const branch = (region.branches || []).find(b => b.id === branchId);
-        if (!branch) throw new GraphQLError("Branch not found");
-
-        if (input.branch_name !== undefined) branch.branch_name = input.branch_name;
-        if (input.address !== undefined) branch.address = input.address;
-
-        await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-        return branch;
-    }
-
-    // Delete any branch
-    async deleteBranch(companyId: string, regionId: string, branchId: string): Promise<boolean> {
-        const res = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: companyId } }));
-        if (!res.Item) throw new GraphQLError("Company not found");
-        const company = res.Item as Company;
-
-        const region = (company.regions || []).find(r => r.id === regionId);
-        if (!region) throw new GraphQLError("Region not found");
-
-        region.branches = (region.branches || []).filter(b => b.id !== branchId);
-
-        await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: company }));
-        return true;
-    }
+  // Delete any branch
+  async deleteBranch(regionId: string, id: string) {
+    return await BranchModel.remove({ 
+      pk: `REGION#${regionId}`,
+      id 
+    });
+  }
 }

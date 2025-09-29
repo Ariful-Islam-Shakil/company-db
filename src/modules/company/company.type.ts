@@ -1,5 +1,4 @@
-import { Field, ID, ObjectType } from "type-graphql";
-import { Region } from "../region/region.type";
+import { ObjectType, Field, ID } from 'type-graphql';
 
 @ObjectType()
 export class Company {
@@ -8,10 +7,5 @@ export class Company {
 
   @Field()
   name!: string;
-
-  @Field(() => [Region])
-  regions!: Region[];
-
-  @Field()
-  createdAt!: string;
 }
+

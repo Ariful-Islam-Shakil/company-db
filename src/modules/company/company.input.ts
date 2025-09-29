@@ -1,6 +1,6 @@
-import { InputType, Field } from "type-graphql";
+import { InputType, Field } from 'type-graphql';
 import { IsNotEmpty } from "class-validator";
-import { CreateRegionInput } from "../region/region.input";
+import { CreateRegionInput } from "../region/region.input"
 
 @InputType()
 export class CreateCompanyInput {
@@ -12,8 +12,8 @@ export class CreateCompanyInput {
   regions?: CreateRegionInput[];
 }
 
-@InputType()
-export class UpdateCompanyInput {
-  @Field({ nullable: true })
-  name?: string;
-}
+
+
+
+
+
