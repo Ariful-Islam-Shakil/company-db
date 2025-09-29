@@ -13,12 +13,14 @@ export class CompanyService {
 
   // Get company By company Name
   async getCompanyByName(name: string) {
-    return await CompanyModel.find({ name }, { index: "gs1" }); // Assuming GSI exists for name
+    // return await CompanyModel.find({ name }, { index: "gs1" }); // Assuming GSI exists for name
+    return await CompanyModel.find({name})
   }
 
   // Get all companies
   async listCompanies() {
-    return await CompanyModel.find({ gs1pk: "COMPANY" }, { index: "gs1" });
+    // return await CompanyModel.find({ gs1pk: "COMPANY" }, { index: "gs1" });
+    return await CompanyModel.scan({});
   }
 
   // Update specific company
