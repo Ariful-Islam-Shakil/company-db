@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { CompanyModel } from "../../core/dynamo";
 import {CreateCompanyInput} from "./company.input"
 
@@ -36,22 +37,74 @@ export class CompanyService{
   }
   // Create new company
   async createCompany(input: CreateCompanyInput) {
-    return await CompanyModel.create(input);
+    try {
+      if (!input?.name?.trim()) {
+        throw new GraphQLError("Company name is required.");
+      }
+      input.name = input.name.trim();
+      const company = await CompanyModel.create(input);
+      if (!company) {
+        throw new GraphQLError("Failed to create company.");
+      }
+      return company;
+    } catch (err: any) {
+      throw new GraphQLError(err.message || "Error creating company.");
+    }
   }
 
-  // Get company By company Name
+  // Get company by company Name
   async getCompanyByName(name: string) {
-    name = name.trim();
-    return await CompanyModel.find({name});
+    try {
+      name = name?.trim();
+      if (!name) {
+        throw new GraphQLError("Company name is required.");
+      }
+
+      const companies = await CompanyModel.find({ name });
+      if (!companies || companies.length === 0) {
+        throw new GraphQLError(`No company found with name: ${name}`);
+      }
+      return companies;
+    } catch (err: any) {
+      throw new GraphQLError(err.message || "Error fetching company by name.");
+    }
   }
 
   // Update specific company
   async updateCompany(id: string, name: string) {
-    name = name.trim();
-    return await CompanyModel.update({ id, name });
+    try {
+      if (!id) {
+        throw new GraphQLError("Company ID is required.");
+      }
+
+      name = name?.trim();
+      if (!name) {
+        throw new GraphQLError("Company name is required.");
+      }
+
+      const updated = await CompanyModel.update({ id, name });
+      if (!updated) {
+        throw new GraphQLError(`No company found with id: ${id}`);
+      }
+      return updated;
+    } catch (err: any) {
+      throw new GraphQLError(err.message || "Error updating company.");
+    }
   }
-  // delete company by ID
+
+  // Delete company by ID
   async deleteCompany(id: string) {
-    return await CompanyModel.remove({ id });
+    try {
+      if (!id) {
+        throw new GraphQLError("Company ID is required.");
+      }
+      const deleted = await CompanyModel.remove({ id });
+      if (!deleted) {
+        throw new GraphQLError(`No company found with id: ${id}`);
+      }
+      return deleted;
+    } catch (err: any) {
+      throw new GraphQLError(err.message || "Error deleting company.");
+    }
   }
 }
