@@ -48,8 +48,11 @@ export class RegionResolver {
     return true;
   }
 
-  @FieldResolver(() => [Branch])
+  @FieldResolver(() => [Branch], { nullable : true })
   async branches(@Root() region: Region) {
+    if(!region || !region.id){
+      return null;
+    }
     return this.branchService.getBranchesByRegion(region.id);
   }
 }
