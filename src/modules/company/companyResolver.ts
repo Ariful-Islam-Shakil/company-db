@@ -1,55 +1,50 @@
-import { Resolver, Query, Mutation, Arg, FieldResolver, Root } from 'type-graphql';
-import { Company } from './company.type';
-import { Region } from '../region/region.type'
-import { CreateCompanyInput} from './company.input';
-import { CompanyService } from './company.service';
+import { Resolver, Query, Arg, Int, FieldResolver, Root, Mutation } from "type-graphql";
+import { Company,  PaginatedCompanies } from "../company/company.type";
+import { CreateCompanyInput } from "./company.input"
+import { CompanyService } from "./company.service";
+import { Region } from '../region/region.type';
 import { RegionService } from '../region/region.service';
 
 @Resolver(() => Company)
 export class CompanyResolver {
-  private service = new CompanyService();
-  private regionService = new RegionService();
-
-  // get all companies
-  @Query(() => [Company])
-  async companies() {
-    return this.service.listCompanies();
+  private regionService = new RegionService()
+  private companyService = new CompanyService()
+  
+  @Query(() => PaginatedCompanies)
+  async companies(
+    @Arg("first", () => Int, { defaultValue: 10 }) first: number,
+    @Arg("after", { nullable: true }) after?: string
+  ): Promise<PaginatedCompanies> {
+    return await this.companyService.listCompaniesPaginated(first, after);
   }
-
-  // get company by companyID
-  @Query(() => Company, { nullable: true })
-  async companyById(@Arg("companyId") companyId: string) {
-    return this.service.getCompany(companyId);
-  }
-
-  // get company by company name
-  @Query(() => [Company], { nullable: true })
-  async companyByName(@Arg("name") name: string) {
-    return this.service.getCompanyByName(name);
-  }
-
   // create new company
   @Mutation(() => Company)
   async createCompany(@Arg("input") input: CreateCompanyInput) {
-    return this.service.createCompany(input);
+    return this.companyService.createCompany(input);
   }
-
+  // get company by company name
+  @Query(() => [Company], { nullable: true })
+  async companyByName(@Arg("name") name: string) {
+    return this.companyService.getCompanyByName(name);
+  }
   // Update a company
   @Mutation(() => Company)
   async updateCompany(@Arg("companyId") id: string, @Arg("name") name: string) {
-    return this.service.updateCompany(id, name);
+    return this.companyService.updateCompany(id, name);
   }
-
   // Delete company by id
   @Mutation(() => Boolean)
   async deleteCompany(@Arg("companyId") id: string) {
-    await this.service.deleteCompany(id);
+    await this.companyService.deleteCompany(id);
     return true;
   }
 
   // fetch nested object data
-  @FieldResolver(() => [Region])
+  @FieldResolver(() => [Region], { nullable: true })
   async regions(@Root() company: Company) {
+    if (!company || !company.id) {
+      return null;
+    }
     return this.regionService.getRegionsByCompany(company.id);
   }
 }

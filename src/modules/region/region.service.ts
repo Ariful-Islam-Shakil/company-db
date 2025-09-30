@@ -15,6 +15,7 @@ export class RegionService {
 
   // get specific region of specific company By regionName
   async getRegionByName(companyId: string, region_name: string) {
+    region_name = region_name.trim();
     return await RegionModel.find({ pk: `COMPANY#${companyId}`, region_name });
   }
   
@@ -25,10 +26,11 @@ export class RegionService {
 
   // Update region information
   async updateRegion(input: UpdateRegionInput) {
+    const regionName = input.region_name.trim()
     return await RegionModel.update({ 
       pk: `COMPANY#${input.companyId}`,
       sk: `REGION#${input.regionId}`,
-      region_name: input.region_name, // updated value
+      region_name: regionName, // updated value
      });
   }
 
