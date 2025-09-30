@@ -14,26 +14,33 @@ function decodeCursor(cursor: string): any {
 export class CompanyService{
   // Pagination of company list
   async listCompaniesPaginated(first = 10, after?: string) {
-    const nextKey = after ? decodeCursor(after) : undefined;
+    try {
+      const nextKey = after ? decodeCursor(after) : undefined;
 
-    const result = await CompanyModel.find(
-      {  },
-      { limit: first, next: nextKey }
-    );
+      // OneTable returns array directly, not { Items }
+      const result = await CompanyModel.find({}, { limit: first, next: nextKey });
 
-    const edges = result.map((item: any) => ({
-      node: item,
-      cursor: encodeCursor({ pk: item.pk, sk: item.sk }),
-    }));
+      if (!result || result.length === 0) {
+        throw new GraphQLError("No companies found for the given query.");
+      }
 
-    return {
-      edges,
-      pageInfo: {
-        hasNextPage: !!result.next,
-        endCursor: result.next ? encodeCursor(result.next) : null,
-      },
-      totalCount: undefined,
-    };
+      // Build edges
+      const edges = result.map((item: any) => ({
+        node: item,
+      }));
+
+      return {
+        edges,
+        pageInfo: {
+          hasNextPage: !!(result as any).next, // result.next exists separately
+          endCursor: (result as any).next ? encodeCursor((result as any).next) : null,
+        },
+        totalCount: undefined, // optional
+      };
+    } catch (err: any) {
+      console.error("Error in listCompaniesPaginated:", err);
+      throw new GraphQLError(err.message || "Error fetching paginated companies.");
+    }
   }
   // Create new company
   async createCompany(input: CreateCompanyInput) {
